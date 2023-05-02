@@ -1,11 +1,19 @@
 import css from './Button.module.css';
+import React from 'react';
+import PropTypes from 'prop-types';
 
-const Button = ({ onClick, disabled }) => {
+const Button = ({ onClick }) => {
   return (
-    <button className={css.Button} onClick={onClick} disabled={disabled}>
-      Load more
-    </button>
+    <div className={css.Button_div}>
+      <button className={css.Button} onClick={onClick}>
+        Load more
+      </button>
+    </div>
   );
+};
+
+Button.propTypes = {
+  onClick: PropTypes.func.isRequired,
 };
 
 export default Button;

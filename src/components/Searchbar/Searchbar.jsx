@@ -15,10 +15,10 @@ const Searchbar = ({ onSubmit }) => {
   };
 
   return (
-      <header className={css.Searchbar}>
-          <form onSubmit={handleSubmit} className={css.SearchForm}>
-              <button type="submit" className={css.SearchForm_button}>
-                <span className={css.SearchForm_button_label}>Search</span>
+    <header className={css.Searchbar}>
+      <form onSubmit={handleSubmit} className={css.SearchForm}>
+        <button type="submit" className={css.SearchForm_button}>
+          <span className={css.SearchForm_button_label}>Search</span>
         </button>
 
         <input
