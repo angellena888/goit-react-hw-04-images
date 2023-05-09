@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import fetchImages from 'services/fetchImages';
@@ -6,89 +6,80 @@ import Modal from './Modal/Modal';
 import Loader from './Loader/Loader';
 import Button from './Button/Button';
 
-export class App extends Component {
-  state = {
-    searchData: '',
-    images: [],
-    page: 0,
-    largeImage: '',
-    showModal: false,
-    isLoading: false,
-    error: null,
-  };
+export function App() {
+  const [searchData, setSearchData] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(0);
+  const [largeImage, setLargeImage] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevPage = prevState.page;
-    const prevSearchData = prevState.searchData;
-    const { searchData, page, images } = this.state;
-    if (prevPage !== page || prevSearchData !== searchData) {
+  useEffect(() => {
+    const fetchImagesData = async () => {
       try {
-        this.setState({ isLoading: true });
-        const response = fetchImages(searchData, page);
-        response.then(data => {
-          data.data.hits.length === 0
-            ? this.setState({ error: 'Nothing found' })
-            : data.data.hits.forEach(({ id, webformatURL, largeImageURL }) => {
-                !images.some(image => image.id === id) &&
-                  this.setState(({ images }) => ({
-                    images: [...images, { id, webformatURL, largeImageURL }],
-                  }));
-              });
-          this.setState({ isLoading: false });
-        });
+        setIsLoading(true);
+        const response = await fetchImages(searchData, page);
+        const data = response.data;
+        if (data.hits.length === 0) {
+          setError('Nothing found');
+        } else {
+          const newImages = data.hits.map(
+            ({ id, webformatURL, largeImageURL }) => ({
+              id,
+              webformatURL,
+              largeImageURL,
+            })
+          );
+          setImages(images => [...images, ...newImages]);
+          setError(null);
+        }
       } catch (error) {
-        this.setState({ error, isLoading: false });
+        setError(error);
       } finally {
+        setIsLoading(false);
       }
-    }
-  }
+    };
 
-  onSubmit = searchData => {
+    if (page > 0) {
+      fetchImagesData();
+    }
+  }, [searchData, page]);
+
+  const onSubmit = searchData => {
     if (searchData.trim() === '') {
-      return this.setState({ error: 'Enter the meaning for search' });
-    } else if (searchData === this.state.searchData) {
+      setError('Enter the meaning for search');
       return;
     }
-    this.setState({
-      searchData: searchData,
-      page: 1,
-      images: [],
-      error: null,
-    });
+    setSearchData(searchData);
+    setPage(1);
+    setImages([]);
+    setError(null);
   };
 
-  onClick = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
+  const onClick = () => {
+    setPage(page => page + 1);
   };
 
-  onImageClick = index => {
-    this.setState(({ images }) => ({
-      showModal: true,
-      largeImage: images[index].largeImageURL,
-    }));
+  const onImageClick = index => {
+    setShowModal(true);
+    setLargeImage(images[index].largeImageURL);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }));
+  const toggleModal = () => {
+    setShowModal(showModal => !showModal);
   };
 
-  render() {
-    const { toggleModal, onImageClick, onClick, onSubmit } = this;
-    const { images, isLoading, largeImage, showModal, error } = this.state;
-
-    return (
-      <div>
-        <Searchbar onSubmit={onSubmit} />
-        {error && <p>{error}</p>}
-        {images.length !== 0 && (
-          <ImageGallery images={images} onImageClick={onImageClick} />
-        )}
-        {showModal && (
-          <Modal toggleModal={toggleModal} largeImage={largeImage} />
-        )}
-        {isLoading && <Loader />}
-        {images.length >= 12 && <Button onClick={onClick} />}
-      </div>
-    );
-  }
+  return (
+    <div>
+      <Searchbar onSubmit={onSubmit} />
+      {error && <p>{error}</p>}
+      {images.length !== 0 && (
+        <ImageGallery images={images} onImageClick={onImageClick} />
+      )}
+      {showModal && <Modal toggleModal={toggleModal} largeImage={largeImage} />}
+      {isLoading && <Loader />}
+      {images.length >= 12 && <Button onClick={onClick} />}
+    </div>
+  );
 }
